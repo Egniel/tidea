@@ -5,6 +5,8 @@
 #   * Make sure each ForeignKey has `on_delete` set to the desired behavior.
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
+from datetime import datetime
+
 from django.db import models
 
 
@@ -14,7 +16,7 @@ class Challenge(models.Model):
     description = models.TextField()
     status = models.IntegerField()
     title = models.TextField()
-    owner = models.ForeignKey('User', models.DO_NOTHING, db_column='owner')
+    owner = models.ForeignKey('User', models.CASCADE, db_column='owner')
     tags = models.ManyToManyField('Tag', through='ChallengeTag')
 
     class Meta:
@@ -23,8 +25,8 @@ class Challenge(models.Model):
 
 
 class ChallengeTag(models.Model):
-    challenge = models.ForeignKey(Challenge, models.DO_NOTHING, db_column='challenge', primary_key=True)
-    tag = models.ForeignKey('Tag', models.DO_NOTHING, db_column='tag')
+    challenge = models.ForeignKey(Challenge, models.CASCADE, db_column='challenge', primary_key=True)
+    tag = models.ForeignKey('Tag', models.CASCADE, db_column='tag')
 
     class Meta:
         managed = False
@@ -33,9 +35,9 @@ class ChallengeTag(models.Model):
 
 
 class Comment(models.Model):
-    idea = models.ForeignKey('Idea', models.DO_NOTHING, db_column='idea')
+    idea = models.ForeignKey('Idea', models.CASCADE, db_column='idea')
     text = models.TextField()
-    user = models.ForeignKey('User', models.DO_NOTHING, db_column='user')
+    user = models.ForeignKey('User', models.CASCADE, db_column='user')
 
     class Meta:
         managed = False
@@ -43,8 +45,8 @@ class Comment(models.Model):
 
 
 class CommentVote(models.Model):
-    comment = models.ForeignKey(Comment, models.DO_NOTHING, db_column='comment')
-    user = models.ForeignKey('User', models.DO_NOTHING, db_column='user')
+    comment = models.ForeignKey(Comment, models.CASCADE, db_column='comment')
+    user = models.ForeignKey('User', models.CASCADE, db_column='user')
     liked = models.BooleanField()
 
     class Meta:
@@ -53,11 +55,10 @@ class CommentVote(models.Model):
 
 
 class Feedback(models.Model):
-    idea = models.ForeignKey('Idea', models.DO_NOTHING, db_column='idea')
-    created_at = models.DateTimeField()
+    idea = models.ForeignKey('Idea', models.CASCADE, db_column='idea')
+    created_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
     is_archieved = models.BooleanField(blank=True, null=True)
-    feedback_items = models.ManyToManyField('FeedbackItem', through='FeedbackFeedbackItem')
 
     class Meta:
         managed = False
@@ -65,8 +66,8 @@ class Feedback(models.Model):
 
 
 class FeedbackFeedbackItem(models.Model):
-    feedback = models.ForeignKey(Feedback, models.DO_NOTHING, db_column='feedback', primary_key=True)
-    feedbackitem = models.ForeignKey('FeedbackItem', models.DO_NOTHING, db_column='feedbackitem')
+    feedback = models.ForeignKey(Feedback, models.CASCADE, db_column='feedback', primary_key=True)
+    feedbackitem = models.ForeignKey('FeedbackItem', models.CASCADE, db_column='feedbackitem')
 
     class Meta:
         managed = False
@@ -75,9 +76,9 @@ class FeedbackFeedbackItem(models.Model):
 
 
 class FeedbackItem(models.Model):
-    feedback_title = models.ForeignKey('FeedbackTitle', models.DO_NOTHING, db_column='feedback_title')
+    feedback_title = models.ForeignKey('FeedbackTitle', models.CASCADE, db_column='feedback_title')
     rating = models.IntegerField()
-    feedback = models.ManyToManyField('Feedback', through='FeedbackFeedbackItem')
+    feedback = models.ManyToManyField('Feedback', through='FeedbackFeedbackItem', related_name='feedback_items')
 
     class Meta:
         managed = False
@@ -93,12 +94,12 @@ class FeedbackTitle(models.Model):
 
 
 class Idea(models.Model):
-    owner = models.ForeignKey('User', models.DO_NOTHING, db_column='owner')
+    owner = models.ForeignKey('User', models.CASCADE, db_column='owner')
     title = models.TextField()
     description = models.TextField()
-    status = models.IntegerField()
-    challenge = models.ForeignKey(Challenge, models.DO_NOTHING, db_column='challenge', blank=True, null=True)
-    created_at = models.DateTimeField()
+    status = models.IntegerField(default=0)
+    challenge = models.ForeignKey(Challenge, models.CASCADE, db_column='challenge', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
     is_archieved = models.BooleanField(blank=True, null=True)
     tags = models.ManyToManyField('Tag', through='IdeaTag')
@@ -109,8 +110,8 @@ class Idea(models.Model):
 
 
 class IdeaTag(models.Model):
-    idea = models.ForeignKey(Idea, models.DO_NOTHING, db_column='idea', primary_key=True)
-    tag = models.ForeignKey('Tag', models.DO_NOTHING, db_column='tag')
+    idea = models.ForeignKey(Idea, models.CASCADE, db_column='idea', primary_key=True)
+    tag = models.ForeignKey('Tag', models.CASCADE, db_column='tag')
 
     class Meta:
         managed = False
@@ -130,8 +131,8 @@ class Tag(models.Model):
 
 
 class TagUser(models.Model):
-    tag = models.ForeignKey(Tag, models.DO_NOTHING, db_column='tag', primary_key=True)
-    user = models.ForeignKey('User', models.DO_NOTHING, db_column='user')
+    tag = models.ForeignKey(Tag, models.CASCADE, db_column='tag', primary_key=True)
+    user = models.ForeignKey('User', models.CASCADE, db_column='user')
 
     class Meta:
         managed = False
@@ -140,7 +141,7 @@ class TagUser(models.Model):
 
 
 class User(models.Model):
-    created_at = models.DateTimeField()
+    created_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
     is_archieved = models.BooleanField(blank=True, null=True)
     tags = models.ManyToManyField('Tag', through='TagUser')
@@ -151,8 +152,8 @@ class User(models.Model):
 
 
 class View(models.Model):
-    user = models.ForeignKey(User, models.DO_NOTHING, db_column='user')
-    idea = models.ForeignKey(Idea, models.DO_NOTHING, db_column='idea')
+    user = models.ForeignKey(User, models.CASCADE, db_column='user')
+    idea = models.ForeignKey(Idea, models.CASCADE, db_column='idea')
     viewed_at = models.DateTimeField()
 
     class Meta:
@@ -162,9 +163,9 @@ class View(models.Model):
 
 class Vote(models.Model):
     liked = models.BooleanField()
-    user = models.ForeignKey(User, models.DO_NOTHING, db_column='user')
-    idea = models.ForeignKey(Idea, models.DO_NOTHING, db_column='idea')
-    created_at = models.DateTimeField()
+    user = models.ForeignKey(User, models.CASCADE, db_column='user')
+    idea = models.ForeignKey(Idea, models.CASCADE, db_column='idea')
+    created_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(blank=True, null=True)
     is_archieved = models.BooleanField(blank=True, null=True)
 
